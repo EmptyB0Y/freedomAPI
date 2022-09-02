@@ -6,7 +6,7 @@ from django.core.mail import send_mail
 import json
 import random
 import string
-from env import PASSWORD,EMAIL
+from login.env import PASSWORD,EMAIL
 
 def get_random_string(length,email):
     # choose from all lowercase letter
@@ -26,8 +26,9 @@ def register(req):
                 userCreated.save()
                 email = body["email"]
                 print(email)
+                print(userCreated.confirmationKey)
                 #Fix : ProtonMail does not allow automated mailing
-                #send_mail('Account confirmation','Click the link to confirm your email : https://127.0.0.1/confirm?token={userCreated.confirmationKey}?email={email}',{EMAIL},{PASSWORD})
+                #send_mail('Account confirmation','Click the link to confirm your email : https://127.0.0.1/confirm?token={userCreated.confirmationKey}&email={email}',{EMAIL},{PASSWORD})
                 print("email sent")
                 return JsonResponse({"response":"OK"})
 
@@ -36,8 +37,10 @@ def register(req):
 @api_view(['GET'])
 def confirm(req):
         token = req.GET.get('token')
+        email = req.GET.get('email')
         print(token)
-        userConfirmed = User.objects.get(req.GET.get('email'))
+        print(email)
+        userConfirmed = User.objects.get(email=email)
         if(token == userConfirmed.confirmationKey):
                 userConfirmed.isConfirmed = True
                 userConfirmed.save()
