@@ -1,3 +1,4 @@
+from asyncio.windows_events import NULL
 from django.shortcuts import render
 from django.http import JsonResponse
 from login.models import User
@@ -7,6 +8,7 @@ import json
 import random
 import string
 from dotenv import load_dotenv
+import hashlib
 
 def get_random_string(length,email):
     # choose from all lowercase letter
@@ -21,7 +23,14 @@ def register(req):
                 userCreated = User()
                 userCreated.name = body['name']
                 userCreated.email = body['email']
-                userCreated.password = body['password']
+                salt = str(userCreated.id)
+                userCreated.password = hashlib.pbkdf2_hmac(
+                    'sha256', # The hash digest algorithm for HMAC
+                    body["password"].encode('utf-8'), # Convert the password to bytes
+                    bytes(salt.encode('utf-8')), # Provide the salt
+                    100000, # It is recommended to use at least 100,000 iterations of SHA-256 
+                    dklen=128 # Get a 128 byte key
+                )
                 userCreated.confirmationKey = get_random_string(16,body["email"])
                 userCreated.save()
                 email = body["email"]
@@ -47,3 +56,30 @@ def confirm(req):
                 userConfirmed.save()
                 return JsonResponse({"response":"OK"})
         return JsonResponse({"response":"NOT OK"})
+
+@api_view(['POST'])
+def login(req):
+    body = json.loads(req.body.decode('utf-8'))
+    userLogged = NULL
+    if("name" in body):
+        userLogged = User.objects.get(name=body["name"])
+    elif("email" in body):
+        userLogged = User.objects.get(email=body["email"])
+
+    if(userLogged != NULL):
+        salt = str(userLogged.id)
+        hashed_password = hashlib.pbkdf2_hmac(
+            'sha256', # The hash digest algorithm for HMAC
+            body["password"].encode('utf-8'), # Convert the password to bytes
+            bytes(salt.encode('utf-8')), # Provide the salt
+            100000, # It is recommended to use at least 100,000 iterations of SHA-256 
+            dklen=128 # Get a 128 byte key
+        )
+        
+        if(str(userLogged.password) == str(hashed_password) and userLogged.isConfirmed):
+            return JsonResponse({"response":"OK"})
+    return JsonResponse({"response":"NOT OK"})
+    
+    
+
+
