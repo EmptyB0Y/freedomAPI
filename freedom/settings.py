@@ -37,8 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'test',
-    'login'
+    'users',
+    'profiles'
 ]
 
 MIDDLEWARE = [
@@ -49,9 +49,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'login.middleware.checkEmail.checkEmailMiddleware',
-    'login.middleware.checkPassword.checkPasswordMiddleware'
-
+    'users.middleware.checkEmail.checkEmailMiddleware',
+    'users.middleware.checkPassword.checkPasswordMiddleware',    
+    'users.middleware.checkAuthentication.checkAuthenticationMiddleware'
 ]
 
 ROOT_URLCONF = 'freedom.urls'
